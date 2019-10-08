@@ -216,7 +216,7 @@ namespace Azure.Test.PerfStress
 
             foreach (var t in testTypes)
             {
-                var baseOptionsType = t.GetConstructors().First().GetParameters()[1].ParameterType;
+                var baseOptionsType = t.GetConstructors().First().GetParameters()[0].ParameterType;
                 var tb = mb.DefineType(t.Name + "Options", TypeAttributes.Public, baseOptionsType);
 
                 var attrCtor = typeof(VerbAttribute).GetConstructor(new Type[] { typeof(string) });

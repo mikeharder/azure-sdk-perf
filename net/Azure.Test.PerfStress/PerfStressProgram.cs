@@ -52,14 +52,14 @@ namespace Azure.Test.PerfStress
 
             var duration = TimeSpan.FromSeconds(options.Duration);
 
-            var tests = new IPerfStressTest[options.Parallel];
+            var tests = new IPerfStressTest[options.Parallel];            
+            for (var i = 0; i < options.Parallel; i++)
+            {
+                tests[i] = (IPerfStressTest)Activator.CreateInstance(testType, options);
+            }
+
             try
             {
-                for (var i = 0; i < options.Parallel; i++)
-                {
-                    tests[i] = (IPerfStressTest)Activator.CreateInstance(testType, i.ToString(), options);
-                }
-
                 await tests[0].GlobalSetup();
 
                 try

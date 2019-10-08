@@ -27,13 +27,13 @@ namespace Azure.Storage.Blobs.PerfStress
 
         public override void Run(CancellationToken cancellationToken)
         {
-            // Must enumerate collection to ensure all BlobItems are downloaded
+            // Enumerate collection to ensure all BlobItems are downloaded
             foreach (var _ in BlobContainerClient.GetBlobs(cancellationToken: cancellationToken));
         }
 
         public override async Task RunAsync(CancellationToken cancellationToken)
         {
-            // Must enumerate collection to ensure all BlobItems are downloaded
+            // Enumerate collection to ensure all BlobItems are downloaded
             await foreach (var _ in BlobContainerClient.GetBlobsAsync(cancellationToken: cancellationToken)) { }
         }
     }

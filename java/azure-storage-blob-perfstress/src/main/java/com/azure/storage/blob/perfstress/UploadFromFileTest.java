@@ -57,11 +57,7 @@ public class UploadFromFileTest extends RandomBlobTest<SizeOptions> {
 
     @Override
     public void Run() {
-        try {
-            _blobClient.uploadFromFile(tempFile.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        _blobClient.uploadFromFile(tempFile.toString());
     }
 
     @Override

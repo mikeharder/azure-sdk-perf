@@ -16,11 +16,7 @@ public class UploadBlockBlobTest extends RandomBlobTest<SizeOptions> {
 
     @Override
     public void Run() {
-        try {
-            _blockBlobClient.upload(RandomStream.create(Options.Size), Options.Size);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        _blockBlobClient.upload(RandomStream.create(Options.Size), Options.Size);
     }
 
     @Override

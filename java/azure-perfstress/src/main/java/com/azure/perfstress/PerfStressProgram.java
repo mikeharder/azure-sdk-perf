@@ -85,7 +85,7 @@ public class PerfStressProgram {
 
         System.out.println();
         System.out.println();
-        Disposable setupStatus = PrintStatus("=== Setup ===", () -> ".", false);
+        Disposable setupStatus = PrintStatus("=== Setup ===", () -> ".", false, false);
         Disposable cleanupStatus = null;
 
         PerfStressTest<?>[] tests = new PerfStressTest<?>[options.Parallel];
@@ -119,7 +119,7 @@ public class PerfStressProgram {
             } finally {
                 if (!options.NoCleanup) {
                     if (cleanupStatus == null) {
-                        cleanupStatus = PrintStatus("=== Cleanup ===", () -> ".", false);
+                        cleanupStatus = PrintStatus("=== Cleanup ===", () -> ".", false, false);
                     }
 
                     Flux.just(tests).flatMap(t -> t.CleanupAsync()).blockLast();
@@ -128,7 +128,7 @@ public class PerfStressProgram {
         } finally {
             if (!options.NoCleanup) {
                 if (cleanupStatus == null) {
-                    cleanupStatus = PrintStatus("=== Cleanup ===", () -> ".", false);
+                    cleanupStatus = PrintStatus("=== Cleanup ===", () -> ".", false, false);
                 }
 
                 tests[0].GlobalCleanupAsync().block();
@@ -153,7 +153,7 @@ public class PerfStressProgram {
                     int currentCompleted = totalCompleted - lastCompleted[0];
                     lastCompleted[0] = totalCompleted;
                     return currentCompleted + "\t\t" + totalCompleted;
-                }, true);
+                }, true, true);
 
         if (sync) {
             ForkJoinPool forkJoinPool = new ForkJoinPool(parallel);
@@ -175,7 +175,7 @@ public class PerfStressProgram {
 
         int totalOperations = IntStream.of(_completedOperations).sum();
         double operationsPerSecond = IntStream.range(0, parallel)
-                .mapToDouble(i -> _completedOperations[i] / (_lastCompletionNanoTimes[i] / 1000000000))
+                .mapToDouble(i -> ((double)_completedOperations[i]) / (_lastCompletionNanoTimes[i] / 1000000000))
                 .sum();
         double secondsPerOperation = 1 / operationsPerSecond;
         double weightedAverageSeconds = totalOperations / operationsPerSecond;
@@ -208,24 +208,32 @@ public class PerfStressProgram {
             .then();
     }
 
-    private static Disposable PrintStatus(String header, Supplier<Object> status, boolean newLine) {
+    private static Disposable PrintStatus(String header, Supplier<Object> status, boolean newLine, boolean printFinalStatus) {
         System.out.println(header);
 
         boolean[] needsExtraNewline = new boolean[] { false };
 
         return Flux.interval(Duration.ofSeconds(1)).doFinally(s -> {
+            if (printFinalStatus) {
+                PrintStatusHelper(status, newLine, needsExtraNewline);
+            }
+
             if (needsExtraNewline[0]) {
                 System.out.println();
             }
             System.out.println();
         }).subscribe(i -> {
-            Object obj = status.get();
-            if (newLine) {
-                System.out.println(obj);
-            } else {
-                System.out.print(obj);
-                needsExtraNewline[0] = true;
-            }
+            PrintStatusHelper(status, newLine, needsExtraNewline);
         });
+    }
+
+    private static void PrintStatusHelper(Supplier<Object> status, boolean newLine, boolean[] needsExtraNewline) {
+        Object obj = status.get();
+        if (newLine) {
+            System.out.println(obj);
+        } else {
+            System.out.print(obj);
+            needsExtraNewline[0] = true;
+        }
     }
 }

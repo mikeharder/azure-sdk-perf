@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 public class PerfStressProgram {
     private static int[] _completedOperations;
@@ -165,7 +166,12 @@ public class PerfStressProgram {
             }
         }
         else {
-            Flux.range(0, parallel).flatMap(i -> RunLoopAsync(tests[i], i, endNanoTime)).blockLast();
+            Flux.range(0, parallel)
+                .parallel()
+                .runOn(Schedulers.parallel())
+                .flatMap(i -> RunLoopAsync(tests[i], i, endNanoTime))
+                .then()
+                .block();
         }
 
         progressStatus.dispose();

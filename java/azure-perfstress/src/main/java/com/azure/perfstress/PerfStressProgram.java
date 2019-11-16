@@ -168,7 +168,7 @@ public class PerfStressProgram {
         else {
             Flux.range(0, parallel)
                 .parallel()
-                .runOn(Schedulers.parallel())
+                .runOn(Schedulers.boundedElastic())
                 .flatMap(i -> RunLoopAsync(tests[i], i, endNanoTime))
                 .then()
                 .block();
@@ -201,6 +201,8 @@ public class PerfStressProgram {
 
     private static Mono<Void> RunLoopAsync(PerfStressTest<?> test, int index, long endNanoTime) {
         long startNanoTime = System.nanoTime();
+
+        System.out.println("RunLoopAsync");
 
         return Flux.just(1)
             .repeat()

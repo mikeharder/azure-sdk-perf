@@ -202,8 +202,6 @@ public class PerfStressProgram {
     private static Mono<Void> RunLoopAsync(PerfStressTest<?> test, int index, long endNanoTime) {
         long startNanoTime = System.nanoTime();
 
-        System.out.println("RunLoopAsync");
-
         return Flux.just(1)
             .repeat()
             .flatMap(i -> test.RunAsync().then(Mono.just(1)), 1)

@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/core/sdk AS build
 # Copy csproj and restore
 WORKDIR /app
 COPY Azure.Test.PerfStress/*.csproj Azure.Test.PerfStress/
-COPY Azure.Security.KeyVault.Secrets.PerfStress/*.csproj Azure.Security.KeyVault.Secrets..PerfStress/
+COPY Azure.Security.KeyVault.Secrets.PerfStress/*.csproj Azure.Security.KeyVault.Secrets.PerfStress/
 
 WORKDIR /app/Azure.Security.KeyVault.Secrets.PerfStress
 RUN dotnet restore

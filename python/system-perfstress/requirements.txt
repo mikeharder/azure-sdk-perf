@@ -1,4 +1,4 @@
-azure-storage-blob==12.1.0
+../azure-test-perfstress
 aiohttp==3.6.2
 requests==2.22.0
 tornado==6.0.3

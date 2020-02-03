@@ -1,6 +1,6 @@
 import requests
 
-from core.PerfStressTest import PerfStressTest
+from azure.test.perfstress import PerfStressTest
 
 class RequestsGetTest(PerfStressTest):
 

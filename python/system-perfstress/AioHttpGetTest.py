@@ -1,6 +1,6 @@
 import aiohttp
 
-from core.PerfStressTest import PerfStressTest
+from azure.test.perfstress import PerfStressTest
 
 class AioHttpGetTest(PerfStressTest):
 

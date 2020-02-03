@@ -1,14 +1,13 @@
 import os
 
-from core.PerfStressTest import PerfStressTest
-from core.Helpers import NewGuid
+from azure.test.perfstress import PerfStressTest
 
 from azure.storage.blob import ContainerClient as SyncContainerClient
 from azure.storage.blob.aio import ContainerClient as AsyncContainerClient
 
 class DownloadBlobTest(PerfStressTest):
-    container_name = NewGuid()
-    blob_name = NewGuid()
+    container_name = PerfStressTest.NewGuid()
+    blob_name = PerfStressTest.NewGuid()
 
     async def GlobalSetupAsync(self):
         connection_string = os.environ.get("STORAGE_CONNECTION_STRING")

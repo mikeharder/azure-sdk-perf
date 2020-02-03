@@ -1,3 +1,6 @@
+import random
+import string
+
 class PerfStressTest:
     '''Base class for implementing a python perf test.  
     
@@ -35,3 +38,7 @@ class PerfStressTest:
     @staticmethod
     def AddArguments(parser):
         return
+    
+    @staticmethod
+    def NewGuid(length=10):
+        return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))

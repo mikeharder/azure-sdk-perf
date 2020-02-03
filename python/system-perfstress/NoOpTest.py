@@ -1,4 +1,4 @@
-from core.PerfStressTest import PerfStressTest
+from azure.test.perfstress import PerfStressTest
 
 class NoOpTest(PerfStressTest):
     def Run(self):

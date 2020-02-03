@@ -1,6 +1,6 @@
 from tornado import httpclient
 
-from core.PerfStressTest import PerfStressTest
+from azure.test.perfstress import PerfStressTest
 
 class TornadoGetTest(PerfStressTest):
 

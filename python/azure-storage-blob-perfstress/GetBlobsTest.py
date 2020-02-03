@@ -1,14 +1,13 @@
 import os
 
-from core.PerfStressTest import PerfStressTest
-from core.Helpers import NewGuid
+from azure.test.perfstress import PerfStressTest
 
 from azure.storage.blob import ContainerClient as SyncContainerClient
 from azure.storage.blob.aio import ContainerClient as AsyncContainerClient
 
 class GetBlobsTest(PerfStressTest):
     '''This test evaluates the perf of enumerating blobs'''
-    container_name = NewGuid()
+    container_name = PerfStressTest.NewGuid()
     def __init__(self):
         connection_string = os.environ.get("STORAGE_CONNECTION_STRING")
         if not connection_string:
@@ -31,7 +30,7 @@ class GetBlobsTest(PerfStressTest):
     async def GlobalSetupAsync(self):
         self.container_client.create_container()
         for _ in range(0, self.Arguments.count): #pylint: disable=no-member
-            self.container_client.upload_blob(NewGuid(), '')
+            self.container_client.upload_blob(PerfStressTest.NewGuid(), '')
 
 
     async def GlobalCleanupAsync(self):

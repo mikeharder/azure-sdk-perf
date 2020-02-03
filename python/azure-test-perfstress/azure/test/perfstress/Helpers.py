@@ -1,11 +1,4 @@
-import random
-import string
 from threading import Timer
-
-
-def NewGuid(length=10):
-    return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
-
 
 # Credit to https://stackoverflow.com/questions/3393612/run-certain-code-every-n-seconds
 class RepeatedTimer(object):

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Azure.Test.PerfStress\Azure.Test.PerfStress.csproj" />
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 
 </Project>

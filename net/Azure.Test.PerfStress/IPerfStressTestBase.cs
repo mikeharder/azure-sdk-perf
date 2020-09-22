@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 
 namespace Azure.Test.PerfStress
 {
-    internal interface IPerfStressTest
+    internal interface IPerfStressTestBase
     {
         Task GlobalSetupAsync();
         Task SetupAsync();
-        void Run(CancellationToken cancellationToken);
+        void RunLoop(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken);
         Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken);
-        Task RunAsync(CancellationToken cancellationToken);
         Task CleanupAsync();
         Task GlobalCleanupAsync();
     }

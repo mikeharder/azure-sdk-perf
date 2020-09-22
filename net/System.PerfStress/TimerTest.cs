@@ -7,17 +7,17 @@ using System.Threading.Tasks;
 
 namespace System.PerfStress
 {
-    public class TimerTest : PerfStressTest<PerfStressOptions>
+    public class TimerTest : PerfStressTestBase<PerfStressOptions>
     {
         public TimerTest(PerfStressOptions options) : base(options)
         {
         }
 
-        public override async Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        private Timer CreateTimer(ResultCollector resultCollector, bool latency)
         {
             var sw = Stopwatch.StartNew();
 
-            using var timer = new Timer(_ =>
+            return new Timer(_ =>
             {
                 if (latency)
                 {
@@ -30,7 +30,17 @@ namespace System.PerfStress
                 }
             },
             state: null, dueTime: TimeSpan.FromSeconds(1), period: TimeSpan.FromSeconds(1));
+        }
 
+        public override void RunLoop(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        {
+            using var timer = CreateTimer(resultCollector, latency);
+            cancellationToken.WaitHandle.WaitOne();
+        }
+
+        public override async Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        {
+            using var timer = CreateTimer(resultCollector, latency);
             await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
         }
     }

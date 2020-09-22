@@ -6,31 +6,55 @@ using System.Threading.Tasks;
 
 namespace Azure.Test.PerfStress
 {
-    public abstract class PerfStressTest<TOptions> : IPerfStressTest where TOptions : PerfStressOptions
+    public abstract class PerfStressTest<TOptions> : PerfStressTestBase<TOptions> where TOptions : PerfStressOptions
     {
-        protected TOptions Options { get; private set; }
-
-        public PerfStressTest(TOptions options)
-        {
-            Options = options;
-        }
-
-        public virtual Task GlobalSetupAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual Task SetupAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual void Run(CancellationToken cancellationToken)
+        public PerfStressTest(TOptions options) : base(options)
         {
         }
 
-        // TODO: Move to new class PerfStressTestBase
-        public virtual async Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        public abstract void Run(CancellationToken cancellationToken);
+
+        public abstract Task RunAsync(CancellationToken cancellationToken);
+
+        public sealed override void RunLoop(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        {
+            var latencySw = new Stopwatch();
+            (TimeSpan Start, Stopwatch Stopwatch) operation = (TimeSpan.Zero, null);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (pendingOperations != null)
+                {
+                    // TODO: Could the perf of this be improved?
+                    operation = pendingOperations.Reader.ReadAsync(cancellationToken).AsTask().Result;
+                }
+
+                if (latency)
+                {
+                    latencySw.Restart();
+                }
+
+                Run(cancellationToken);
+
+                if (latency)
+                {
+                    if (pendingOperations != null)
+                    {
+                        resultCollector.Add(latencySw.Elapsed, operation.Stopwatch.Elapsed - operation.Start);
+                    }
+                    else
+                    {
+                        resultCollector.Add(latencySw.Elapsed);
+                    }
+                }
+                else
+                {
+                    resultCollector.Add();
+                }
+            }
+        }
+
+        public sealed override async Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
         {
             var latencySw = new Stopwatch();
             (TimeSpan Start, Stopwatch Stopwatch) operation = (TimeSpan.Zero, null);
@@ -65,21 +89,6 @@ namespace Azure.Test.PerfStress
                     resultCollector.Add();
                 }
             }
-        }
-
-        public virtual Task RunAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual Task CleanupAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual Task GlobalCleanupAsync()
-        {
-            return Task.CompletedTask;
         }
     }
 }

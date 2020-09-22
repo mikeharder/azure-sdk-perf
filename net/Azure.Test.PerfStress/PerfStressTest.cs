@@ -1,4 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Azure.Test.PerfStress
@@ -22,9 +25,52 @@ namespace Azure.Test.PerfStress
             return Task.CompletedTask;
         }
 
-        public abstract void Run(CancellationToken cancellationToken);
+        public virtual void Run(CancellationToken cancellationToken)
+        {
+        }
 
-        public abstract Task RunAsync(CancellationToken cancellationToken);
+        // TODO: Move to new class PerfStressTestBase
+        public virtual async Task RunLoopAsync(ResultCollector resultCollector, bool latency, Channel<(TimeSpan, Stopwatch)> pendingOperations, CancellationToken cancellationToken)
+        {
+            var latencySw = new Stopwatch();
+            (TimeSpan Start, Stopwatch Stopwatch) operation = (TimeSpan.Zero, null);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (pendingOperations != null)
+                {
+                    operation = await pendingOperations.Reader.ReadAsync(cancellationToken);
+                }
+
+                if (latency)
+                {
+                    latencySw.Restart();
+                }
+
+                await RunAsync(cancellationToken);
+
+                if (latency)
+                {
+                    if (pendingOperations != null)
+                    {
+                        resultCollector.Add(latencySw.Elapsed, operation.Stopwatch.Elapsed - operation.Start);
+                    }
+                    else
+                    {
+                        resultCollector.Add(latencySw.Elapsed);
+                    }
+                }
+                else
+                {
+                    resultCollector.Add();
+                }
+            }
+        }
+
+        public virtual Task RunAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
 
         public virtual Task CleanupAsync()
         {

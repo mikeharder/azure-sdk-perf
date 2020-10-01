@@ -138,7 +138,7 @@ namespace Azure.Test.Stress
             progressStatusThread.Join();
         }
 
-        private static bool ContainsOperationCanceledException(Exception e)
+        internal static bool ContainsOperationCanceledException(Exception e)
         {
             if (e is OperationCanceledException)
             {

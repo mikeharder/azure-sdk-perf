@@ -53,5 +53,7 @@ namespace Azure.Test.Stress
         {
             return default;
         }
+
+        protected static bool ContainsOperationCanceledException(Exception e) => StressProgram.ContainsOperationCanceledException(e);
     }
 }

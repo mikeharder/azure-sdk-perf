@@ -13,13 +13,7 @@ namespace System.Stress
 
         public override async Task RunAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-            }
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
         }
     }
 }

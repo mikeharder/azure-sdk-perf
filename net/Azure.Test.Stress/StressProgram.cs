@@ -126,10 +126,32 @@ namespace Azure.Test.Stress
                 newLine: true,
                 progressStatusCts.Token);
 
-            await test.RunAsync(cancellationToken);
+            try
+            {
+                await test.RunAsync(cancellationToken);
+            }
+            catch (Exception e) when (ContainsOperationCanceledException(e))
+            {
+            }
 
             progressStatusCts.Cancel();
             progressStatusThread.Join();
+        }
+
+        private static bool ContainsOperationCanceledException(Exception e)
+        {
+            if (e is OperationCanceledException)
+            {
+                return true;
+            }
+            else if (e.InnerException != null)
+            {
+                return ContainsOperationCanceledException(e.InnerException);
+            }
+            else
+            {
+                return false;
+            }
         }
 
         // Run in dedicated thread instead of using async/await in ThreadPool, to ensure this thread has priority

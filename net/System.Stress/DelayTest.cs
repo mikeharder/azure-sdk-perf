@@ -14,18 +14,12 @@ namespace System.Stress
 
         public override async Task RunAsync(CancellationToken cancellationToken)
         {
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    await Task.Delay(TimeSpan.FromMilliseconds(Options.InitialDelayMs), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(Options.InitialDelayMs), cancellationToken);
 
-                    // Increment metrics
-                    Interlocked.Increment(ref Metrics.TotalOperations);
-                }
-            }
-            catch (OperationCanceledException)
-            {
+                // Increment metrics
+                Interlocked.Increment(ref Metrics.TotalOperations);
             }
         }
 

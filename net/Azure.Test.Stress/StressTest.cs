@@ -9,6 +9,9 @@ namespace Azure.Test.Stress
         protected TOptions Options { get; private set; }
         protected TMetrics Metrics { get; private set; }
 
+        // Convenient source of randomness for base classes
+        protected Random Random { get; } = new Random();
+
         public StressTest(TOptions options, TMetrics metrics)
         {
             Options = options;

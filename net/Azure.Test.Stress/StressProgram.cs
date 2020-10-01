@@ -75,6 +75,7 @@ namespace Azure.Test.Stress
 
             var metricsType = testType.GetConstructors().First().GetParameters()[1].ParameterType;
             var metrics = (StressMetrics)Activator.CreateInstance(metricsType);
+            metrics.Duration = TimeSpan.FromSeconds(options.Duration);
 
             var test = (IStressTest)Activator.CreateInstance(testType, options, metrics);
 
@@ -86,7 +87,10 @@ namespace Azure.Test.Stress
                     setupStatusCts.Cancel();
                     setupStatusThread.Join();
 
-                    await RunTestAsync(test, options.Duration, metrics);
+                    using (metrics)
+                    {
+                        await RunTestAsync(test, options.Duration, metrics);
+                    }
                 }
                 finally
                 {

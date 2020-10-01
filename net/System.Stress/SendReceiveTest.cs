@@ -37,10 +37,7 @@ namespace System.Stress
             }
 
             // Block until all messages have been received
-            while (Metrics.Unprocessed > 0)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(50));
-            }
+            await DelayUntil(() => Metrics.Unprocessed > 0);
 
             receiverCts.Cancel();
 

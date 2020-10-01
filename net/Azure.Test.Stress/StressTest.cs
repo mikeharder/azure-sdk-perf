@@ -55,5 +55,15 @@ namespace Azure.Test.Stress
         }
 
         protected static bool ContainsOperationCanceledException(Exception e) => StressProgram.ContainsOperationCanceledException(e);
+
+        protected static Task DelayUntil(Func<bool> predicate, CancellationToken token = default) => DelayUntil(predicate, TimeSpan.FromMilliseconds(50), token);
+
+        protected static async Task DelayUntil(Func<bool> predicate, TimeSpan interval, CancellationToken token = default)
+        {
+            while (!predicate())
+            {
+                await Task.Delay(interval, token);
+            }
+        }
     }
 }

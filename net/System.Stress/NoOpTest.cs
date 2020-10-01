@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace System.Stress
 {
-    public class NoOpTest : StressTest<StressOptions>
+    public class NoOpTest : StressTest<StressOptions, StressMetrics>
     {
-        public NoOpTest(StressOptions options) : base(options)
+        public NoOpTest(StressOptions options, StressMetrics metrics) : base(options, metrics)
         {
         }
 

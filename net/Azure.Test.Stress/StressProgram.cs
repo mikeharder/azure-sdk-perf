@@ -73,7 +73,10 @@ namespace Azure.Test.Stress
             using var cleanupStatusCts = new CancellationTokenSource();
             Thread cleanupStatusThread = null;
 
-            var test = (IStressTest)Activator.CreateInstance(testType, options);
+            var metricsType = testType.GetConstructors().First().GetParameters()[1].ParameterType;
+            var metrics = (StressMetrics)Activator.CreateInstance(metricsType);
+
+            var test = (IStressTest)Activator.CreateInstance(testType, options, metrics);
 
             try
             {
@@ -83,7 +86,7 @@ namespace Azure.Test.Stress
                     setupStatusCts.Cancel();
                     setupStatusThread.Join();
 
-                    await RunTestAsync(test, options.Duration);
+                    await RunTestAsync(test, options.Duration, metrics);
                 }
                 finally
                 {
@@ -110,13 +113,23 @@ namespace Azure.Test.Stress
             }
         }
 
-        private static async Task RunTestAsync(IStressTest test, int durationSeconds)
+        private static async Task RunTestAsync(IStressTest test, int durationSeconds, StressMetrics metrics)
         {
             var duration = TimeSpan.FromSeconds(durationSeconds);
             using var testCts = new CancellationTokenSource(duration);
             var cancellationToken = testCts.Token;
 
+            using var progressStatusCts = new CancellationTokenSource();
+            var progressStatusThread = PrintStatus(
+                "=== Run ===",
+                () => metrics.ToString(),
+                newLine: true,
+                progressStatusCts.Token);
+
             await test.RunAsync(cancellationToken);
+
+            progressStatusCts.Cancel();
+            progressStatusThread.Join();
         }
 
         // Run in dedicated thread instead of using async/await in ThreadPool, to ensure this thread has priority

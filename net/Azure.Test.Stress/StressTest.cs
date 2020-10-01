@@ -4,13 +4,15 @@ using System.Threading.Tasks;
 
 namespace Azure.Test.Stress
 {
-    public abstract class StressTest<TOptions> : IStressTest where TOptions : StressOptions
+    public abstract class StressTest<TOptions, TMetrics> : IStressTest where TOptions : StressOptions where TMetrics : StressMetrics
     {
         protected TOptions Options { get; private set; }
+        protected TMetrics Metrics { get; private set; }
 
-        public StressTest(TOptions options)
+        public StressTest(TOptions options, TMetrics metrics)
         {
             Options = options;
+            Metrics = metrics;
         }
 
         public virtual Task SetupAsync()

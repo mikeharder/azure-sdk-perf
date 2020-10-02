@@ -6,7 +6,7 @@ namespace Azure.Test.Stress
 {
     public abstract class StressTest<TOptions, TMetrics> : IStressTest where TOptions : StressOptions where TMetrics : StressMetrics
     {
-        protected TOptions Options { get; private set; }
+        protected TOptions Options { get; private set; }        
         protected TMetrics Metrics { get; private set; }
 
         // Convenient source of randomness for base classes
@@ -54,6 +54,7 @@ namespace Azure.Test.Stress
             return default;
         }
 
+        // Helpers
         protected static bool ContainsOperationCanceledException(Exception e) => StressProgram.ContainsOperationCanceledException(e);
 
         protected static Task DelayUntil(Func<bool> predicate, CancellationToken token = default) => DelayUntil(predicate, TimeSpan.FromMilliseconds(50), token);

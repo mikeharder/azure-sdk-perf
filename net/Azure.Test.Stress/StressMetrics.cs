@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading;
 
 namespace Azure.Test.Stress
 {
-    public class StressMetrics : IDisposable
+    public class StressMetrics
     {
         // Timing
         public DateTime StartTime { get; } = DateTime.Now;
@@ -31,39 +32,35 @@ namespace Azure.Test.Stress
         public long Gen1Collections;
         public long Gen2Collections;
 
+        // Exceptions
+        public ConcurrentQueue<Exception> Exceptions { get; } = new ConcurrentQueue<Exception>();
+
         // Private
         private Thread _updateCpuMemoryThread;
         private CancellationTokenSource _updateCpuMemoryCts;
 
-        public StressMetrics()
+        internal void StartUpdatingCpuMemory()
         {
             _updateCpuMemoryCts = new CancellationTokenSource();
             _updateCpuMemoryThread = UpdateCpuMemory(_updateCpuMemoryCts.Token);
         }
 
+        internal void StopUpdatingCpuMemory()
+        {
+            _updateCpuMemoryCts.Cancel();
+            _updateCpuMemoryThread.Join();
+        }
+
         // Run in dedicated thread to ensure this thread has priority and never fails to run to due ThreadPool starvation.
         private Thread UpdateCpuMemory(CancellationToken token)
         {
+            // Update once synchronously, to ensure values are initialized before first status output.
+            UpdateCpuMemory();
+
             var thread = new Thread(() =>
             {
                 while (!token.IsCancellationRequested)
                 {
-                    var memory = GC.GetTotalMemory(false);
-
-                    Interlocked.Increment(ref MemorySamples);
-                    Interlocked.Add(ref MemorySum, memory);
-                    Interlocked.Exchange(ref CurrentMemory, memory); ;
-                    Interlocked.Exchange(ref Gen0Collections, GC.CollectionCount(0));
-                    Interlocked.Exchange(ref Gen1Collections, GC.CollectionCount(1));
-                    Interlocked.Exchange(ref Gen2Collections, GC.CollectionCount(2));
-
-                    if (memory > Interlocked.Read(ref PeakMemory))
-                    {
-                        Interlocked.Exchange(ref PeakMemory, memory);
-                    }
-
-                    TotalProcessorTime = Process.GetCurrentProcess().TotalProcessorTime;
-
                     try
                     {
                         Sleep(TimeSpan.FromSeconds(1), token);
@@ -71,12 +68,33 @@ namespace Azure.Test.Stress
                     catch (OperationCanceledException)
                     {
                     }
+
+                    UpdateCpuMemory();
                 }
             });
 
             thread.Start();
 
             return thread;
+        }
+
+        private void UpdateCpuMemory()
+        {
+            var memory = GC.GetTotalMemory(false);
+
+            Interlocked.Increment(ref MemorySamples);
+            Interlocked.Add(ref MemorySum, memory);
+            Interlocked.Exchange(ref CurrentMemory, memory); ;
+            Interlocked.Exchange(ref Gen0Collections, GC.CollectionCount(0));
+            Interlocked.Exchange(ref Gen1Collections, GC.CollectionCount(1));
+            Interlocked.Exchange(ref Gen2Collections, GC.CollectionCount(2));
+
+            if (memory > Interlocked.Read(ref PeakMemory))
+            {
+                Interlocked.Exchange(ref PeakMemory, memory);
+            }
+
+            TotalProcessorTime = Process.GetCurrentProcess().TotalProcessorTime;
         }
 
         private static void Sleep(TimeSpan timeout, CancellationToken token)
@@ -113,6 +131,13 @@ namespace Azure.Test.Stress
             data.Add(("GC Gen 0 Collections", Interlocked.Read(ref Gen0Collections)));
             data.Add(("GC Gen 1 Collections", Interlocked.Read(ref Gen1Collections)));
             data.Add(("GC Gen 2 Collections", Interlocked.Read(ref Gen2Collections)));
+
+            // Exceptions
+            data.Add(("Total Exceptions", Exceptions.Count));
+            foreach (var g in Exceptions.GroupBy(e => e.GetType()).OrderBy(g => g.Key.Name))
+            {
+                data.Add((g.Key.Name, g.Count()));
+            }
 
             var allMembers = this.GetType().GetMembers(BindingFlags.Public | BindingFlags.Instance);
             var baseMemberNames = typeof(StressMetrics).GetMembers(BindingFlags.Public | BindingFlags.Instance).Select(m => m.Name);
@@ -176,25 +201,6 @@ namespace Azure.Test.Stress
             }
 
             return sb.ToString();
-        }
-
-        // https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/implementing-dispose
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _updateCpuMemoryCts?.Cancel();
-                _updateCpuMemoryThread?.Join();
-                _updateCpuMemoryCts?.Dispose();
-                _updateCpuMemoryCts = null;
-                _updateCpuMemoryThread = null;
-            }
         }
     }
 }

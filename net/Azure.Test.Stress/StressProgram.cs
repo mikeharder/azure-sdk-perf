@@ -87,10 +87,7 @@ namespace Azure.Test.Stress
                     setupStatusCts.Cancel();
                     setupStatusThread.Join();
 
-                    using (metrics)
-                    {
-                        await RunTestAsync(test, options.Duration, metrics);
-                    }
+                    await RunTestAsync(test, options.Duration, metrics);
                 }
                 finally
                 {
@@ -115,6 +112,15 @@ namespace Azure.Test.Stress
             {
                 cleanupStatusThread.Join();
             }
+
+            Console.WriteLine("=== Final Metrics ===");
+            Console.WriteLine(metrics);
+
+            Console.WriteLine("=== Exceptions ===");
+            foreach (var exception in metrics.Exceptions)
+            {
+                Console.WriteLine(exception);
+            }
         }
 
         private static async Task RunTestAsync(IStressTest test, int durationSeconds, StressMetrics metrics)
@@ -123,9 +129,11 @@ namespace Azure.Test.Stress
             using var testCts = new CancellationTokenSource(duration);
             var cancellationToken = testCts.Token;
 
+            metrics.StartUpdatingCpuMemory();
+
             using var progressStatusCts = new CancellationTokenSource();
             var progressStatusThread = PrintStatus(
-                "=== Run ===",
+                "=== Metrics ===",
                 () => metrics.ToString(),
                 newLine: true,
                 progressStatusCts.Token);
@@ -137,6 +145,8 @@ namespace Azure.Test.Stress
             catch (Exception e) when (ContainsOperationCanceledException(e))
             {
             }
+
+            metrics.StopUpdatingCpuMemory();
 
             progressStatusCts.Cancel();
             progressStatusThread.Join();

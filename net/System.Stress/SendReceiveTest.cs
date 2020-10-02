@@ -47,17 +47,16 @@ namespace System.Stress
             var index = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(Random.Next(0, Options.MaxSendDelayMs)), cancellationToken);
-                await _channel.Writer.WriteAsync(index, cancellationToken);
-                Interlocked.Increment(ref Metrics.Sends);
-
-                var d = Random.NextDouble();
-                if (d < Options.SendExceptionRate)
+                try
                 {
-                    Metrics.Exceptions.Enqueue(new SendException(d.ToString()));
+                    await Send(index, cancellationToken);
+                    Interlocked.Increment(ref Metrics.Sends);
+                    index++;
                 }
-
-                index++;
+                catch (Exception e) when (!ContainsOperationCanceledException(e))
+                {
+                    Metrics.Exceptions.Enqueue(e);
+                }
             }
         }
 
@@ -65,15 +64,45 @@ namespace System.Stress
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(Random.Next(0, Options.MaxReceiveDelayMs)), cancellationToken);
-                await _channel.Reader.ReadAsync(cancellationToken);
-                Interlocked.Increment(ref Metrics.Receives);
-
-                var d = Random.NextDouble();
-                if (d < Options.ReceiveExceptionRate)
+                try
                 {
-                    Metrics.Exceptions.Enqueue(new ReceiveException(d.ToString()));
+                    await Receive(cancellationToken);
+                    Interlocked.Increment(ref Metrics.Receives);
                 }
+                catch (Exception e) when (!ContainsOperationCanceledException(e))
+                {
+                    Metrics.Exceptions.Enqueue(e);
+                }
+            }
+        }
+
+        // Simulates method in SDK
+        private async Task Send(int index, CancellationToken cancellationToken)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(Random.Next(0, Options.MaxSendDelayMs)), cancellationToken);
+            var d = Random.NextDouble();
+            if (d < Options.SendExceptionRate)
+            {
+                throw new SendException(d.ToString());
+            }
+            else
+            {
+                await _channel.Writer.WriteAsync(index, cancellationToken);
+            }
+        }
+
+        // Simulates method in SDK
+        private async Task Receive(CancellationToken cancellationToken)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(Random.Next(0, Options.MaxReceiveDelayMs)), cancellationToken);
+            var d = Random.NextDouble();
+            if (d < Options.ReceiveExceptionRate)
+            {
+                throw new ReceiveException(d.ToString());
+            }
+            else
+            {
+                await _channel.Reader.ReadAsync(cancellationToken);
             }
         }
 

@@ -120,6 +120,7 @@ namespace Azure.Test.Stress
             foreach (var exception in metrics.Exceptions)
             {
                 Console.WriteLine(exception);
+                Console.WriteLine();
             }
         }
 

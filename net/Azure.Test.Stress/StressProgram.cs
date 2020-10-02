@@ -42,32 +42,8 @@ namespace Azure.Test.Stress
 
         private static async Task Run(Type testType, StressOptions options)
         {
-            // Require Server GC, since most stress-sensitive usage will be in ASP.NET apps which
-            // enable Server GC by default.  Though Server GC is disabled on 1-core machines as of
-            // .NET Core 3.0 (https://github.com/dotnet/runtime/issues/12484).
-            if (Environment.ProcessorCount > 1 && !GCSettings.IsServerGC)
-            {
-                throw new InvalidOperationException("Requires server GC");
-            }
-
-            Console.WriteLine("=== Versions ===");
-            Console.WriteLine($"Runtime: {Environment.Version}");
-            var azureAssemblies = testType.Assembly.GetReferencedAssemblies()
-                .Where(a => a.Name.StartsWith("Azure", StringComparison.OrdinalIgnoreCase))
-                .Where(a => !a.Name.Equals("Azure.Test.PerfStress", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(a => a.Name);
-            foreach (var a in azureAssemblies)
-            {
-                Console.WriteLine($"{a.Name}: {a.Version}");
-            }
-            Console.WriteLine();
-
-            Console.WriteLine("=== Options ===");
-            Console.WriteLine(JsonSerializer.Serialize(options, options.GetType(), new JsonSerializerOptions()
-            {
-                WriteIndented = true
-            }));
-            Console.WriteLine();
+            var header = HeaderString(testType, options);
+            Console.WriteLine(header);
 
             using var setupStatusCts = new CancellationTokenSource();
             var setupStatusThread = PrintStatus("=== Setup ===", () => ".", newLine: false, setupStatusCts.Token);
@@ -115,29 +91,60 @@ namespace Azure.Test.Stress
                 cleanupStatusThread.Join();
             }
 
-            WriteMetrics(metrics, options);
-            WriteExceptions(metrics, options);
+            WriteMetrics(metrics, header, options);
+            WriteExceptions(metrics, header, options);
         }
 
-        private static void WriteMetrics(StressMetrics metrics, StressOptions options)
+        private static string HeaderString(Type testType, StressOptions options)
         {
-            Console.WriteLine("=== Final Metrics ===");
-            
-            var metricsString = metrics.ToString();
-            
+            var sb = new StringBuilder();
+
+            sb.AppendLine("=== Versions ===");
+            sb.AppendLine($"Runtime: {Environment.Version}");
+            var azureAssemblies = testType.Assembly.GetReferencedAssemblies()
+                .Where(a => a.Name.StartsWith("Azure", StringComparison.OrdinalIgnoreCase))
+                .Where(a => !a.Name.Equals("Azure.Test.PerfStress", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(a => a.Name);
+            foreach (var a in azureAssemblies)
+            {
+                sb.AppendLine($"{a.Name}: {a.Version}");
+            }
+            sb.AppendLine();
+
+            sb.AppendLine("=== Environment ===");
+            sb.AppendLine($"ProcessorCount: {Environment.ProcessorCount}");
+            sb.AppendLine($"GC: {(GCSettings.IsServerGC ? "Server" : "Workstation")}");
+            sb.AppendLine();
+
+            sb.AppendLine("=== Options ===");
+            sb.AppendLine(JsonSerializer.Serialize(options, options.GetType(), new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            }));
+            sb.AppendLine();
+
+            return sb.ToString();
+        }
+
+        private static void WriteMetrics(StressMetrics metrics, string header, StressOptions options)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== Final Metrics ===");
+            sb.Append(metrics.ToString());
+            var metricsString = sb.ToString();
+
             Console.WriteLine(metricsString);
             
             if (!string.IsNullOrEmpty(options.MetricsFile))
             {
-                File.WriteAllText(options.MetricsFile, metricsString);
+                File.WriteAllText(options.MetricsFile, header + metricsString);
             }
         }
 
-        private static void WriteExceptions(StressMetrics metrics, StressOptions options)
-        {
-            Console.WriteLine("=== Exceptions ===");
-            
+        private static void WriteExceptions(StressMetrics metrics, string header, StressOptions options)
+        {           
             var sb = new StringBuilder();
+            sb.AppendLine("=== Exceptions ===");
             foreach (var exception in metrics.Exceptions)
             {
                 sb.AppendLine(exception.ToString());
@@ -149,7 +156,7 @@ namespace Azure.Test.Stress
 
             if (!string.IsNullOrEmpty(options.ExceptionsFile))
             {
-                File.WriteAllText(options.ExceptionsFile, exceptionsString);
+                File.WriteAllText(options.ExceptionsFile, header + exceptionsString);
             }
         }
 

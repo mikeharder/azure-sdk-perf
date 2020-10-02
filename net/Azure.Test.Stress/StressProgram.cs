@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -113,14 +115,41 @@ namespace Azure.Test.Stress
                 cleanupStatusThread.Join();
             }
 
-            Console.WriteLine("=== Final Metrics ===");
-            Console.WriteLine(metrics);
+            WriteMetrics(metrics, options);
+            WriteExceptions(metrics, options);
+        }
 
+        private static void WriteMetrics(StressMetrics metrics, StressOptions options)
+        {
+            Console.WriteLine("=== Final Metrics ===");
+            
+            var metricsString = metrics.ToString();
+            
+            Console.WriteLine(metricsString);
+            
+            if (!string.IsNullOrEmpty(options.MetricsFile))
+            {
+                File.WriteAllText(options.MetricsFile, metricsString);
+            }
+        }
+
+        private static void WriteExceptions(StressMetrics metrics, StressOptions options)
+        {
             Console.WriteLine("=== Exceptions ===");
+            
+            var sb = new StringBuilder();
             foreach (var exception in metrics.Exceptions)
             {
-                Console.WriteLine(exception);
-                Console.WriteLine();
+                sb.AppendLine(exception.ToString());
+                sb.AppendLine();
+            }
+            var exceptionsString = sb.ToString();
+
+            Console.WriteLine(exceptionsString);
+
+            if (!string.IsNullOrEmpty(options.ExceptionsFile))
+            {
+                File.WriteAllText(options.ExceptionsFile, exceptionsString);
             }
         }
 

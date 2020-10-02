@@ -9,5 +9,11 @@ namespace Azure.Test.Stress
 
         [Option("no-cleanup", HelpText = "Disables test cleanup")]
         public bool NoCleanup { get; set; }
+
+        [Option("exceptions-file", HelpText = "Write exceptions to file (in addition to console)")]
+        public string ExceptionsFile { get; set; }
+
+        [Option("metrics-file", HelpText = "Write metrics to file (in addition to console)")]
+        public string MetricsFile { get; set; }
     }
 }

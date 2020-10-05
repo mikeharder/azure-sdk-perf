@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Test.Stress", "Azure.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Stress", "System.Stress\System.Stress.csproj", "{7A78EEE7-2109-4C84-898F-FEF0FF8AD860}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Messaging.EventHubs.Stress", "Azure.Messaging.EventHubs.Stress\Azure.Messaging.EventHubs.Stress.csproj", "{D7E94127-A0F0-414C-BDA1-C84AD00DA2EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{7A78EEE7-2109-4C84-898F-FEF0FF8AD860}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A78EEE7-2109-4C84-898F-FEF0FF8AD860}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A78EEE7-2109-4C84-898F-FEF0FF8AD860}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7E94127-A0F0-414C-BDA1-C84AD00DA2EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7E94127-A0F0-414C-BDA1-C84AD00DA2EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7E94127-A0F0-414C-BDA1-C84AD00DA2EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7E94127-A0F0-414C-BDA1-C84AD00DA2EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

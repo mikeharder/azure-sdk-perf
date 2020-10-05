@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Azure.Core.Diagnostics;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -35,18 +37,35 @@ namespace Azure.Test.Stress
         // Exceptions
         public ConcurrentQueue<Exception> Exceptions { get; } = new ConcurrentQueue<Exception>();
 
+        // Events
+        private AzureEventSourceListener _eventListener;
+        public ConcurrentQueue<(EventWrittenEventArgs EventArgs, string Message)> Events { get; }
+            = new ConcurrentQueue<(EventWrittenEventArgs EventArgs, string Message)>();
+
+        // Options
+        internal StressOptions Options { get; set; }
+
         // Private
         private Thread _updateCpuMemoryThread;
         private CancellationTokenSource _updateCpuMemoryCts;
 
-        internal void StartUpdatingCpuMemory()
+        internal void StartAutoUpdate()
         {
+            _eventListener = new AzureEventSourceListener((eventArgs, message) =>
+            {
+                Events.Enqueue((EventArgs: eventArgs, Message: message));
+            },
+            level: Options.EventLevel);
+
             _updateCpuMemoryCts = new CancellationTokenSource();
             _updateCpuMemoryThread = UpdateCpuMemory(_updateCpuMemoryCts.Token);
         }
 
-        internal void StopUpdatingCpuMemory()
+        internal void StopAutoUpdate()
         {
+            _eventListener.Dispose();
+            _eventListener = null;
+
             _updateCpuMemoryCts.Cancel();
             _updateCpuMemoryThread.Join();
         }
@@ -137,6 +156,13 @@ namespace Azure.Test.Stress
             foreach (var g in Exceptions.GroupBy(e => e.GetType()).OrderBy(g => g.Key.Name))
             {
                 data.Add((g.Key.Name, g.Count()));
+            }
+
+            // Events
+            data.Add(("Total Events", Events.Count));
+            foreach (var g in Events.GroupBy(e => $"{e.EventArgs.EventSource.Name}::{e.EventArgs.EventName}").OrderBy(g => g.Key))
+            {
+                data.Add((g.Key, g.Count()));
             }
 
             var allMembers = this.GetType().GetMembers(BindingFlags.Public | BindingFlags.Instance);

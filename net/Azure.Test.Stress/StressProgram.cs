@@ -54,6 +54,7 @@ namespace Azure.Test.Stress
             var metricsType = testType.GetConstructors().First().GetParameters()[1].ParameterType;
             var metrics = (StressMetrics)Activator.CreateInstance(metricsType);
             metrics.Duration = TimeSpan.FromSeconds(options.Duration);
+            metrics.Options = options;
 
             var test = (IStressTest)Activator.CreateInstance(testType, options, metrics);
 
@@ -93,6 +94,7 @@ namespace Azure.Test.Stress
 
             WriteMetrics(metrics, header, options);
             WriteExceptions(metrics, header, options);
+            WriteEvents(metrics, header, options);
         }
 
         private static string HeaderString(Type testType, StressOptions options)
@@ -160,13 +162,33 @@ namespace Azure.Test.Stress
             }
         }
 
+        private static void WriteEvents(StressMetrics metrics, string header, StressOptions options)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== Events ===");
+            foreach (var e in metrics.Events)
+            {
+                sb.AppendLine($"[{e.EventArgs.EventSource.Name} :: {e.EventArgs.EventName}]");
+                sb.AppendLine(e.Message);
+                sb.AppendLine();
+            }
+            var eventsString = sb.ToString();
+
+            Console.WriteLine(eventsString);
+
+            if (!string.IsNullOrEmpty(options.EventsFile))
+            {
+                File.WriteAllText(options.ExceptionsFile, header + eventsString);
+            }
+        }
+
         private static async Task RunTestAsync(IStressTest test, int durationSeconds, StressMetrics metrics)
         {
             var duration = TimeSpan.FromSeconds(durationSeconds);
             using var testCts = new CancellationTokenSource(duration);
             var cancellationToken = testCts.Token;
 
-            metrics.StartUpdatingCpuMemory();
+            metrics.StartAutoUpdate();
 
             using var progressStatusCts = new CancellationTokenSource();
             var progressStatusThread = PrintStatus(
@@ -182,8 +204,9 @@ namespace Azure.Test.Stress
             catch (Exception e) when (ContainsOperationCanceledException(e))
             {
             }
+            // TODO: Consider more exception handling, including a special case for OutOfMemoryException, StackOverflowException, etc
 
-            metrics.StopUpdatingCpuMemory();
+            metrics.StopAutoUpdate();
 
             progressStatusCts.Cancel();
             progressStatusThread.Join();

@@ -29,12 +29,14 @@ namespace Azure.Messaging.EventHubs.Stress
             var processorTask = Process(processorCts.Token);
 
             // Wait for partitions to be initialized, to ensure processor only consumes the newly published messages.
+            Console.WriteLine("await _partitionsInitialized.WaitAsync()");
             await _partitionsInitialized.WaitAsync();
 
             var producerTask = Produce(cancellationToken);
 
             try
             {
+                Console.WriteLine("await producerTask");
                 await producerTask;
             }
             catch (Exception e) when (ContainsOperationCanceledException(e))
@@ -43,9 +45,11 @@ namespace Azure.Messaging.EventHubs.Stress
 
             // Block until all messages have been received OR the timeout is exceeded
             using var unprocessedEventCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Options.UnprocessedEventTimeoutMs));
+            Console.WriteLine("await DelayUntil(() => Metrics.EventsRead >= Metrics.EventsPublished, unprocessedEventCts.Token);");
             await DelayUntil(() => Metrics.EventsRead >= Metrics.EventsPublished, unprocessedEventCts.Token);
 
             processorCts.Cancel();
+            Console.WriteLine("await processorTask");
             await processorTask;
         }
 
@@ -57,6 +61,7 @@ namespace Azure.Messaging.EventHubs.Stress
             while (!cancellationToken.IsCancellationRequested)
             {
                 var batchEvents = new List<EventData>();
+                Console.WriteLine("await producer.CreateBatchAsync()");
                 using var batch = await producer.CreateBatchAsync();
 
                 for (var i = 0; i < Options.PublishBatchSize; i++)
@@ -78,6 +83,7 @@ namespace Azure.Messaging.EventHubs.Stress
 
                 try
                 {
+                    Console.WriteLine("await producer.SendAsync()");
                     await producer.SendAsync(batch, cancellationToken);
                     Interlocked.Add(ref Metrics.EventsPublished, batch.Count);
                     Interlocked.Increment(ref Metrics.TotalServiceOperations);
@@ -106,7 +112,10 @@ namespace Azure.Messaging.EventHubs.Stress
 
             try
             {
+                Console.WriteLine("await processor.StartProcessingAsync(cancellationToken)");
                 await processor.StartProcessingAsync(cancellationToken);
+
+                Console.WriteLine("await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken)");
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             }
             catch (OperationCanceledException)

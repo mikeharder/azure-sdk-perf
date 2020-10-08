@@ -7,6 +7,7 @@ using CommandLine;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,14 +26,23 @@ namespace Azure.Messaging.EventHubs.Stress
 
         public override async Task RunAsync(CancellationToken cancellationToken)
         {
+            var producer = new EventHubProducerClient(EventHubsConnectionString, EventHubName);
+            var partitions = (await producer.GetPartitionIdsAsync(cancellationToken)).Length;
+
             using var processorCts = new CancellationTokenSource();
-            var processorTask = Process(processorCts.Token);
+
+            // TODO: Test multiple processors with multiple partitions
+            var processorTasks = new Task[Options.ProcessorCount];
+            for (var i=0; i < Options.ProcessorCount; i++)
+            {
+                processorTasks[i] = Process(processorCts.Token);
+            }
 
             // Wait for partitions to be initialized, to ensure processor only consumes the newly published messages.
             Console.WriteLine("await _partitionsInitialized.WaitAsync()");
-            await _partitionsInitialized.WaitAsync();
+            await Task.WhenAll(Enumerable.Range(0, partitions).Select(_ => _partitionsInitialized.WaitAsync()));
 
-            var producerTask = Produce(cancellationToken);
+            var producerTask = Produce(producer, cancellationToken);
 
             try
             {
@@ -49,15 +59,14 @@ namespace Azure.Messaging.EventHubs.Stress
             await DelayUntil(() => Metrics.EventsRead >= Metrics.EventsPublished, unprocessedEventCts.Token);
 
             processorCts.Cancel();
-            Console.WriteLine("await processorTask");
-            await processorTask;
+            Console.WriteLine("await processorTasks");
+            await Task.WhenAll(processorTasks);
         }
 
-        private async Task Produce(CancellationToken cancellationToken)
+        private async Task Produce(EventHubProducerClient producer, CancellationToken cancellationToken)
         {
             var id = 0;
 
-            var producer = new EventHubProducerClient(EventHubsConnectionString, EventHubName);
             while (!cancellationToken.IsCancellationRequested)
             {
                 var batchEvents = new List<EventData>();
@@ -137,6 +146,7 @@ namespace Azure.Messaging.EventHubs.Stress
         private Task PartitionInitializingHandler(PartitionInitializingEventArgs args)
         {
             args.DefaultStartingPosition = EventPosition.Latest;
+            Console.WriteLine("_partitionsInitialized.Release();");
             _partitionsInitialized.Release();
             return Task.CompletedTask;
         }

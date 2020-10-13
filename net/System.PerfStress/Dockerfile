@@ -15,7 +15,7 @@ COPY Azure.Test.PerfStress Azure.Test.PerfStress/
 COPY System.PerfStress System.PerfStress/
 
 WORKDIR /app/System.PerfStress
-RUN dotnet publish --no-restore -c Release -o out -f netcoreapp2.0
+RUN dotnet publish --no-restore -c Release -o out -f netcoreapp3.1
 
 
 # Copy build artifacts into runtime image

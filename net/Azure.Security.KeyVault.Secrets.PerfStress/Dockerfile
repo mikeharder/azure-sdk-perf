@@ -15,7 +15,7 @@ COPY Azure.Test.PerfStress Azure.Test.PerfStress/
 COPY Azure.Security.KeyVault.Secrets.PerfStress Azure.Security.KeyVault.Secrets.PerfStress/
 
 WORKDIR /app/Azure.Security.KeyVault.Secrets.PerfStress
-RUN dotnet publish --no-restore -c Release -o out -f netcoreapp2.0
+RUN dotnet publish --no-restore -c Release -o out -f netcoreapp3.1
 
 
 # Copy build artifacts into runtime image

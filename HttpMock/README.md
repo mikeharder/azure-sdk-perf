@@ -5,7 +5,7 @@
 3. `cd ../net/Azure.Storage.Blobs.PerfStress`
 
 ```
-> dotnet run -c release -f netcoreapp2.0 -- download
+> dotnet run -c release -f netcoreapp3.1 -- download
 
 === Results ===
 Completed 495 operations in a weighted-average of 10.02s (49.42 ops/s, 0.020 s/op)
@@ -34,7 +34,7 @@ Application started. Press Ctrl+C to shut down.
 1. Go back to first command prompt
 
 ```
-> dotnet run -c release -f netcoreapp2.0 -- download --insecure --host localhost --port 7778
+> dotnet run -c release -f netcoreapp3.1 -- download --insecure --host localhost --port 7778
 
 === Results ===
 Completed 20626 operations in a weighted-average of 10.03s (2,055.50 ops/s, 0.000 s/op)

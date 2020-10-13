@@ -1,6 +1,6 @@
 # Example
 ```
-> dotnet run -f netcoreapp2.0 sendreceive
+> dotnet run -f netcoreapp3.1 sendreceive
 
 === Final Metrics ===
 Start:                   10/1/2020 5:31:55 PM

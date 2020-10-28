@@ -13,8 +13,8 @@ namespace Azure.Messaging.ServiceBus.Stress.Core
         
         protected ServiceBusTest(TOptions options, TMetrics metrics) : base(options, metrics)
         {
-            ServiceBusConnectionString = Environment.GetEnvironmentVariable("SERVICE_BUS_CONNECTION_STRING");
-            QueueName = Environment.GetEnvironmentVariable("QUEUE_NAME");
+            ServiceBusConnectionString = GetEnvironmentVariable("SERVICE_BUS_CONNECTION_STRING");
+            QueueName = GetEnvironmentVariable("QUEUE_NAME");
 
             ServiceBusClient = new ServiceBusClient(ServiceBusConnectionString);
         }

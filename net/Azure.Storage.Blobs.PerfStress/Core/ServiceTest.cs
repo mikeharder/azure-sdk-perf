@@ -9,12 +9,7 @@ namespace Azure.Storage.Blobs.PerfStress
 
         public ServiceTest(TOptions options) : base(options)
         {
-            var connectionString = Environment.GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new InvalidOperationException("Undefined environment variable STORAGE_CONNECTION_STRING");
-            }
+            var connectionString = GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
 
             var blobClientOptions = new BlobClientOptions()
             {

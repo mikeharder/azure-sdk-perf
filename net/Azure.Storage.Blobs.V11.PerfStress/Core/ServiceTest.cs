@@ -11,15 +11,9 @@ namespace Azure.Storage.Blobs.PerfStress.Core
 
         public ServiceTest(TOptions options) : base(options)
         {
-            var connectionString = Environment.GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new InvalidOperationException("Undefined environment variable STORAGE_CONNECTION_STRING");
-            }
+            var connectionString = GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
 
             CloudStorageAccount.TryParse(connectionString, out var storageAccount);
-
 
             CloudBlobClient = storageAccount.CreateCloudBlobClient();
         }

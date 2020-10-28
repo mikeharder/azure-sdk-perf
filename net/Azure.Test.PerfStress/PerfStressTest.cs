@@ -60,5 +60,15 @@ namespace Azure.Test.PerfStress
         {
             return default;
         }
+
+        protected static string GetEnvironmentVariable(string name)
+        {
+            var value = Environment.GetEnvironmentVariable(name);
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"Undefined environment variable {name}");
+            }
+            return value;
+        }
     }
 }

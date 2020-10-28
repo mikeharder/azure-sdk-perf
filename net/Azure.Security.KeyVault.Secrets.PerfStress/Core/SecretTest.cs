@@ -11,12 +11,7 @@ namespace Azure.Security.KeyVault.Secrets.PerfStress.Core
 
         public SecretTest(TOptions options) : base(options)
         {
-            var keyvaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-
-            if (string.IsNullOrEmpty(keyvaultUri))
-            {
-                throw new InvalidOperationException("Undefined environment variable KEYVAULT_URI");
-            }
+            var keyvaultUri = GetEnvironmentVariable("KEYVAULT_URI");
 
             var secretClientOptions = new SecretClientOptions()
             {

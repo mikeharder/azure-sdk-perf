@@ -16,23 +16,9 @@ namespace Azure.Messaging.EventHubs.Stress.Core
 
         protected EventHubsTest(TOptions options, TMetrics metrics) : base(options, metrics)
         {
-            EventHubsConnectionString = Environment.GetEnvironmentVariable("EVENT_HUBS_CONNECTION_STRING");
-            if (string.IsNullOrEmpty(EventHubsConnectionString))
-            {
-                throw new InvalidOperationException("Undefined environment variable EVENT_HUBS_CONNECTION_STRING");
-            }
-
-            EventHubName = Environment.GetEnvironmentVariable("EVENT_HUB_NAME");
-            if (string.IsNullOrEmpty(EventHubName))
-            {
-                throw new InvalidOperationException("Undefined environment variable EVENT_HUB_NAME");
-            }
-
-            StorageConnectionString = Environment.GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
-            if (string.IsNullOrEmpty(StorageConnectionString))
-            {
-                throw new InvalidOperationException("Undefined environment variable STORAGE_CONNECTION_STRING");
-            }
+            EventHubsConnectionString = GetEnvironmentVariable("EVENT_HUBS_CONNECTION_STRING");
+            EventHubName = GetEnvironmentVariable("EVENT_HUB_NAME");
+            StorageConnectionString = GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
 
             BlobContainerClient = new BlobContainerClient(StorageConnectionString, BlobContainerName);
         }

@@ -10,12 +10,7 @@ namespace Azure.Messaging.ServiceBus.PerfStress.Core
 
         public SenderReceiverTest(TOptions options) : base(options)
         {
-            var queue = Environment.GetEnvironmentVariable("SERVICEBUS_QUEUE");
-
-            if (string.IsNullOrEmpty(queue))
-            {
-                throw new InvalidOperationException("Undefined environment variable SERVICEBUS_QUEUE");
-            }
+            var queue = GetEnvironmentVariable("SERVICEBUS_QUEUE");
 
             ServiceBusSender = ServiceBusClient.CreateSender(queue);
             ServiceBusReceiver = ServiceBusClient.CreateReceiver(queue);

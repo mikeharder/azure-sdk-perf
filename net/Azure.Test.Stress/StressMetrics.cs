@@ -49,11 +49,16 @@ namespace Azure.Test.Stress
         private Thread _updateCpuMemoryThread;
         private CancellationTokenSource _updateCpuMemoryCts;
 
+        protected virtual void ProcessEvent(EventWrittenEventArgs eventArgs, string message)
+        {
+            Events.Enqueue((EventArgs: eventArgs, Message: message));
+        }
+
         internal void StartAutoUpdate()
         {
             _eventListener = new AzureEventSourceListener((eventArgs, message) =>
             {
-                Events.Enqueue((EventArgs: eventArgs, Message: message));
+                ProcessEvent(eventArgs, message);
             },
             level: Options.EventLevel);
 

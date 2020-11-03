@@ -7,6 +7,7 @@ using CommandLine;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -188,6 +189,15 @@ namespace Azure.Messaging.EventHubs.Stress
             public long EventsReadUnknown;
             public long EventsReadDuplicate;
             public long TotalServiceOperations;
+
+            protected override void ProcessEvent(EventWrittenEventArgs eventArgs, string message)
+            {
+                // Only track messages from specific sources
+                if (eventArgs.EventSource.Name.StartsWith("Azure-Messaging-EventHubs-Processor"))
+                {
+                    base.ProcessEvent(eventArgs, message);
+                }
+            }
         }
 
         public class EventProcessorOptions : StressOptions

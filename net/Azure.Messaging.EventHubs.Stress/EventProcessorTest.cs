@@ -39,14 +39,12 @@ namespace Azure.Messaging.EventHubs.Stress
             }
 
             // Wait for partitions to be initialized, to ensure processor only consumes the newly published messages.
-            Console.WriteLine("await _partitionsInitialized.WaitAsync()");
             await Task.WhenAll(Enumerable.Range(0, partitions).Select(_ => _partitionsInitialized.WaitAsync()));
 
             var producerTask = Produce(producer, cancellationToken);
 
             try
             {
-                Console.WriteLine("await producerTask");
                 await producerTask;
             }
             catch (Exception e) when (ContainsOperationCanceledException(e))
@@ -55,11 +53,9 @@ namespace Azure.Messaging.EventHubs.Stress
 
             // Block until all messages have been received OR the timeout is exceeded
             using var unprocessedEventCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Options.UnprocessedEventTimeoutMs));
-            Console.WriteLine("await DelayUntil(() => Metrics.EventsRead >= Metrics.EventsPublished, unprocessedEventCts.Token);");
             await DelayUntil(() => Metrics.EventsRead >= Metrics.EventsPublished, unprocessedEventCts.Token);
 
             processorCts.Cancel();
-            Console.WriteLine("await processorTasks");
             await Task.WhenAll(processorTasks);
         }
 
@@ -70,14 +66,11 @@ namespace Azure.Messaging.EventHubs.Stress
             while (!cancellationToken.IsCancellationRequested)
             {
                 var batchEvents = new List<EventData>();
-                Console.WriteLine("await producer.CreateBatchAsync()");
                 using var batch = await producer.CreateBatchAsync();
 
                 for (var i = 0; i < Options.PublishBatchSize; i++)
                 {
                     var currentId = id++;
-
-                    Console.WriteLine($"Published: {currentId}");
 
                     _published.TryAdd(currentId, 0);
                     var e = new EventData(BitConverter.GetBytes(currentId));
@@ -92,7 +85,6 @@ namespace Azure.Messaging.EventHubs.Stress
 
                 try
                 {
-                    Console.WriteLine("await producer.SendAsync()");
                     await producer.SendAsync(batch, cancellationToken);
                     Interlocked.Add(ref Metrics.EventsPublished, batch.Count);
                     Interlocked.Increment(ref Metrics.TotalServiceOperations);
@@ -103,7 +95,6 @@ namespace Azure.Messaging.EventHubs.Stress
                     foreach (var batchEvent in batchEvents)
                     {
                         var currentId = BitConverter.ToInt32(batchEvent.Body.ToArray(), startIndex: 0);
-                        Console.WriteLine($"Removed: {currentId}");
                         _published.TryRemove(currentId, out _);
                     }
                 }
@@ -121,10 +112,7 @@ namespace Azure.Messaging.EventHubs.Stress
 
             try
             {
-                Console.WriteLine("await processor.StartProcessingAsync(cancellationToken)");
                 await processor.StartProcessingAsync(cancellationToken);
-
-                Console.WriteLine("await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken)");
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             }
             catch (OperationCanceledException)
@@ -132,8 +120,6 @@ namespace Azure.Messaging.EventHubs.Stress
             }
             finally
             {
-                Console.WriteLine("await processor.StopProcessingAsync();");
-
                 // TODO: Set timeout and log exceptions if cannot be cancelled
                 await processor.StopProcessingAsync();
             }
@@ -146,7 +132,6 @@ namespace Azure.Messaging.EventHubs.Stress
         private Task PartitionInitializingHandler(PartitionInitializingEventArgs args)
         {
             args.DefaultStartingPosition = EventPosition.Latest;
-            Console.WriteLine("_partitionsInitialized.Release();");
             _partitionsInitialized.Release();
             return Task.CompletedTask;
         }
@@ -167,7 +152,6 @@ namespace Azure.Messaging.EventHubs.Stress
                 if (_published.TryUpdate(id, 1, 0))
                 {
                     Interlocked.Increment(ref Metrics.EventsRead);
-                    Console.WriteLine($"EventsRead: {id}");
                 }
                 else
                 {
@@ -185,7 +169,6 @@ namespace Azure.Messaging.EventHubs.Stress
             else
             {
                 Interlocked.Increment(ref Metrics.EventsReadUnknown);
-                Console.WriteLine($"EventsReadUnknown: {id}");
             }
 
             return Task.CompletedTask;

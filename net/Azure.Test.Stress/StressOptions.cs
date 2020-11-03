@@ -22,5 +22,8 @@ namespace Azure.Test.Stress
 
         [Option("no-cleanup", HelpText = "Disables test cleanup")]
         public bool NoCleanup { get; set; }
+
+        [Option("status-interval", Default = 1, HelpText = "Interval to write status to console in seconds")]
+        public int StatusInterval { get; set; }
     }
 }

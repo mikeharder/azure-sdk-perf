@@ -66,7 +66,7 @@ namespace Azure.Test.Stress
                     setupStatusCts.Cancel();
                     setupStatusThread.Join();
 
-                    await RunTestAsync(test, options.Duration, metrics);
+                    await RunTestAsync(test, options.Duration, options.StatusInterval, metrics);
                 }
                 finally
                 {
@@ -136,7 +136,7 @@ namespace Azure.Test.Stress
             var metricsString = sb.ToString();
 
             Console.WriteLine(metricsString);
-            
+
             if (!string.IsNullOrEmpty(options.MetricsFile))
             {
                 File.WriteAllText(options.MetricsFile, header + metricsString);
@@ -144,7 +144,7 @@ namespace Azure.Test.Stress
         }
 
         private static void WriteExceptions(StressMetrics metrics, string header, StressOptions options)
-        {           
+        {
             var sb = new StringBuilder();
             sb.AppendLine("=== Exceptions ===");
             foreach (var exception in metrics.Exceptions)
@@ -182,7 +182,7 @@ namespace Azure.Test.Stress
             }
         }
 
-        private static async Task RunTestAsync(IStressTest test, int durationSeconds, StressMetrics metrics)
+        private static async Task RunTestAsync(IStressTest test, int durationSeconds, int statusIntervalSeconds, StressMetrics metrics)
         {
             var duration = TimeSpan.FromSeconds(durationSeconds);
             using var testCts = new CancellationTokenSource(duration);
@@ -195,7 +195,8 @@ namespace Azure.Test.Stress
                 "=== Metrics ===",
                 () => metrics.ToString(),
                 newLine: true,
-                progressStatusCts.Token);
+                progressStatusCts.Token,
+                statusIntervalSeconds);
 
             try
             {
@@ -230,7 +231,7 @@ namespace Azure.Test.Stress
 
         // Run in dedicated thread instead of using async/await in ThreadPool, to ensure this thread has priority
         // and never fails to run to due ThreadPool starvation.
-        private static Thread PrintStatus(string header, Func<object> status, bool newLine, CancellationToken token)
+        private static Thread PrintStatus(string header, Func<object> status, bool newLine, CancellationToken token, int intervalSeconds = 1)
         {
             var thread = new Thread(() =>
             {
@@ -242,7 +243,7 @@ namespace Azure.Test.Stress
                 {
                     try
                     {
-                        Sleep(TimeSpan.FromSeconds(1), token);
+                        Sleep(TimeSpan.FromSeconds(intervalSeconds), token);
                     }
                     catch (OperationCanceledException)
                     {

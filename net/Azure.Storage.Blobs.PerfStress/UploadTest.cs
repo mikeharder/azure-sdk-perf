@@ -12,7 +12,7 @@ namespace Azure.Storage.Blobs.PerfStress
 
         public UploadTest(StorageTransferOptionsOptions options) : base(options)
         {
-            _stream = RandomStream.Create(Options.Size);
+            _stream = RandomStream.Create(options.Size);
         }
 
         public override void Dispose(bool disposing)

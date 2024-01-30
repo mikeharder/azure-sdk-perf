@@ -1,2 +1,2 @@
 azure-storage-blob==12.0.0b3
-aiohttp==3.9.0
+aiohttp==3.9.2

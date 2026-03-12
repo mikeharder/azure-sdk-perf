@@ -1,6 +1,6 @@
 ../azure-test-perfstress
 aiohttp==3.13.3
 requests==2.32.4
-tornado==6.5.1
+tornado==6.5.5
 pycurl==7.43.0.5
 httpx==0.23.0
